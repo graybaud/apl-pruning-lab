@@ -92,3 +92,18 @@ pytest tests/ -v
 ## License
 
 MIT
+
+
+
+
+
+
+A. Le parseur niveau 2 : support des axes (dim=-1), slicing (W[i]), broadcasting, plus de primitives (softmax, std, topk, threshold)
+
+B. Un benchmark automatique : tu files une liste de formules APL et un modèle, ça te sort un tableau comparatif (Wanda vs Grad×W vs ta méthode 3 composantes vs tout ce que tu veux)
+
+C. L'intégration LLM : un prompt système + exemples pour que Claude/GPT écrive automatiquement les formules APL à partir d'un papier de recherche
+
+D. La génération de code : le parseur peut exporter la version PyTorch équivalente pour vérification croisée
+
+E. Un exemple complet sur un vrai modèle : Llama-7B, toutes les couches, avec des vraies métriques de pruning

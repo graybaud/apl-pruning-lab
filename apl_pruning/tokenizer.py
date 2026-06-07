@@ -103,7 +103,7 @@ def tokenize(code: str) -> list:
             if word in (
                 'mean', 'var', 'norm', 'sum', 'max', 'min',
                 'sqrt', 'log', 'exp', 'abs', 'std',
-                'softmax', 'topk', 'threshold', 'where'
+                'softmax', 'topk', 'threshold', 'where', 'rank', 'sort'
             ):
                 tokens.append(('FUNC', word))
             elif word in ('dim', 'axis'):

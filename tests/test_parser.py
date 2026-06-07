@@ -179,3 +179,26 @@ def test_softmax_axis_param(parser):
     e = np.exp(W - np.max(W, axis=0, keepdims=True))
     expected = e / np.sum(e, axis=0, keepdims=True)
     assert np.allclose(result, expected)
+
+
+def test_rank(parser):
+    result = parser.evaluate("rank(W)")
+    expected = 2  # 2x3 matrix has rank 2
+    assert result == expected
+
+
+def test_sort(parser):
+    result = parser.evaluate("sort(|W|)")
+    expected = np.sort(np.abs(parser.variables["W"]).flatten())
+    assert np.allclose(result, expected)
+
+
+def test_rank(parser):
+    result = parser.evaluate("rank(W)")
+    assert result == 2
+
+
+def test_sort(parser):
+    result = parser.evaluate("sort(|W|)")
+    expected = np.sort(np.abs(parser.variables["W"]).flatten())
+    assert np.allclose(result, expected)

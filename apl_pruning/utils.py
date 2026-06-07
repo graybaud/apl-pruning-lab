@@ -17,16 +17,10 @@ def _ensure_array(x):
 
 
 def _broadcast_for_binary(a, b):
-    """Prepare two arrays for binary operation with APL-style broadcasting.
-    
-    If a is (n,) and b is (n,m), reshape a to (n,1) so the operation
-    broadcasts as (n,1) op (n,m) -> (n,m). Same for b.
-    Otherwise return a, b unchanged (numpy handles the rest).
-    """
+    """Prepare two arrays for binary operation with APL-style broadcasting."""
     a = _ensure_array(a)
     b = _ensure_array(b)
     
-    # Only intervene for the specific (n,) with (n,m) case
     if a.ndim == 1 and b.ndim >= 2 and a.shape[0] == b.shape[0]:
         a = a.reshape(-1, *([1] * (b.ndim - 1)))
     elif b.ndim == 1 and a.ndim >= 2 and b.shape[0] == a.shape[0]:
@@ -37,17 +31,26 @@ def _broadcast_for_binary(a, b):
 
 def broadcast_add(a, b):
     a, b = _broadcast_for_binary(a, b)
-    return a + b
+    try:
+        return a + b
+    except ValueError as e:
+        raise ValueError(f"Dimension mismatch: {a.shape} + {b.shape} cannot be broadcast. {e}")
 
 
 def broadcast_sub(a, b):
     a, b = _broadcast_for_binary(a, b)
-    return a - b
+    try:
+        return a - b
+    except ValueError as e:
+        raise ValueError(f"Dimension mismatch: {a.shape} - {b.shape} cannot be broadcast. {e}")
 
 
 def broadcast_mul(a, b):
     a, b = _broadcast_for_binary(a, b)
-    return a * b
+    try:
+        return a * b
+    except ValueError as e:
+        raise ValueError(f"Dimension mismatch: {a.shape} x {b.shape} cannot be broadcast. {e}")
 
 
 def broadcast_div(a, b):
@@ -56,10 +59,13 @@ def broadcast_div(a, b):
         raise ZeroDivisionError(
             f"Division by near-zero. min(|denominator|) = {np.min(np.abs(b)):.2e}"
         )
-    return a / b
+    try:
+        return a / b
+    except ValueError as e:
+        raise ValueError(f"Dimension mismatch: {a.shape} / {b.shape} cannot be broadcast. {e}")
 
 
-# ---- Safe math functions (raise instead of warning) ----
+# ---- Safe math functions ----
 
 def safe_mean(x, axis=None):
     if x.size == 0:
@@ -89,3 +95,21 @@ def safe_norm(x, axis=None):
     if x.size == 0:
         raise ValueError("Cannot compute norm of empty tensor")
     return np.linalg.norm(x, axis=axis)
+
+
+def safe_rank(x):
+    """Matrix rank via SVD thresholding."""
+    if x.size == 0:
+        raise ValueError("Cannot compute rank of empty tensor")
+    if x.ndim < 2:
+        return 1 if x.size > 0 else 0
+    s = np.linalg.svd(x, compute_uv=False)
+    tol = s.max() * max(x.shape) * np.finfo(s.dtype).eps
+    return int(np.sum(s > tol))
+
+
+def safe_sort(x, axis=None):
+    """Sort that raises on empty tensor."""
+    if x.size == 0:
+        raise ValueError("Cannot sort empty tensor")
+    return np.sort(x, axis=axis)

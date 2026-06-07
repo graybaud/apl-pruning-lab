@@ -3,7 +3,7 @@
 import numpy as np
 from apl_pruning.utils import (
     softmax, broadcast_add, broadcast_sub, broadcast_mul, broadcast_div,
-    safe_mean, safe_var, safe_std, safe_sum, safe_norm
+    safe_mean, safe_var, safe_std, safe_sum, safe_norm, safe_rank, safe_sort
 )
 
 
@@ -69,13 +69,21 @@ def eval_ast(ast, variables: dict):
     
     # ---- Binary ----
     if node_type == 'add':
-        return broadcast_add(eval_ast(ast[1], variables), eval_ast(ast[2], variables))
+        a = eval_ast(ast[1], variables)
+        b = eval_ast(ast[2], variables)
+        return broadcast_add(a, b)
     if node_type == 'sub':
-        return broadcast_sub(eval_ast(ast[1], variables), eval_ast(ast[2], variables))
+        a = eval_ast(ast[1], variables)
+        b = eval_ast(ast[2], variables)
+        return broadcast_sub(a, b)
     if node_type == 'mul':
-        return broadcast_mul(eval_ast(ast[1], variables), eval_ast(ast[2], variables))
+        a = eval_ast(ast[1], variables)
+        b = eval_ast(ast[2], variables)
+        return broadcast_mul(a, b)
     if node_type == 'div':
-        return broadcast_div(eval_ast(ast[1], variables), eval_ast(ast[2], variables))
+        a = eval_ast(ast[1], variables)
+        b = eval_ast(ast[2], variables)
+        return broadcast_div(a, b)
     if node_type == 'pow':
         return eval_ast(ast[1], variables) ** eval_ast(ast[2], variables)
     
@@ -85,14 +93,12 @@ def eval_ast(ast, variables: dict):
 # ---- Internal helpers ----
 
 def _to_int(val):
-    """Safely convert a value to int."""
     if isinstance(val, (int, float, np.integer, np.floating)):
         return int(val)
     return val
 
 
 def _build_index_tuple(indices, variables):
-    """Build a tuple for numpy advanced indexing."""
     result = []
     for spec in indices:
         if isinstance(spec, tuple) and spec[0] == 'slice':
@@ -105,7 +111,6 @@ def _build_index_tuple(indices, variables):
 
 
 def _normalize_axis(axis):
-    """Convert axis from AST representation to int or None."""
     if axis is None:
         return None
     if isinstance(axis, tuple):
@@ -121,12 +126,10 @@ def _normalize_axis(axis):
 
 
 def _eval_function(ast, variables):
-    """Evaluate a func_with_axis node."""
     func_name = ast[1]
     arg = eval_ast(ast[2], variables)
     axis = _normalize_axis(ast[3])
     
-    # Safe reductions
     if func_name == 'mean':
         return safe_mean(arg, axis=axis) if axis is not None else safe_mean(arg)
     if func_name == 'var':
@@ -137,8 +140,11 @@ def _eval_function(ast, variables):
         return safe_norm(arg, axis=axis) if axis is not None else safe_norm(arg)
     if func_name == 'sum':
         return safe_sum(arg, axis=axis) if axis is not None else safe_sum(arg)
+    if func_name == 'rank':
+        return safe_rank(arg)
+    if func_name == 'sort':
+        return safe_sort(arg, axis=axis)
     
-    # Min/max with empty check
     if func_name == 'max':
         if arg.size == 0:
             raise ValueError("Cannot compute max of empty tensor")
@@ -148,7 +154,6 @@ def _eval_function(ast, variables):
             raise ValueError("Cannot compute min of empty tensor")
         return np.min(arg, axis=axis) if axis is not None else np.min(arg)
     
-    # Math with domain validation
     if func_name == 'sqrt':
         if np.any(arg < 0):
             raise ValueError("Cannot compute sqrt of negative values. Use |X| first.")
@@ -158,7 +163,6 @@ def _eval_function(ast, variables):
             raise ValueError("Cannot compute log of non-positive values. Use |X| or X + epsilon.")
         return np.log(arg)
     
-    # Safe passthrough
     if func_name == 'exp':
         return np.exp(arg)
     if func_name == 'softmax':

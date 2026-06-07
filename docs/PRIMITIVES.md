@@ -85,3 +85,20 @@ softmax(|W|)
 
 // Threshold mask
 threshold(|W|, 0.5)
+
+## Additional Primitives (v0.2.1)
+
+| APL | Python/NumPy | Description |
+|-----|-------------|-------------|
+| rank(X) | np.linalg.matrix_rank(X) | Matrix rank |
+| sort(X) | np.sort(X) | Sort elements |
+
+## Error Messages
+
+The parser provides clear error messages:
+- `Variable 'X' not defined. Available: [...]`
+- `Cannot compute mean of empty tensor`
+- `Division by near-zero. min(|denominator|) = ...`
+- `Cannot compute sqrt of negative values. Use |X| first.`
+- `Cannot compute log of non-positive values. Use |X| or X + epsilon.`
+- `Dimension mismatch: (a,b) + (c,d) cannot be broadcast.`

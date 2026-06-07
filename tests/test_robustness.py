@@ -354,3 +354,69 @@ class TestFuzzing:
         result = parser.evaluate("sum(W[:, 0:100])")
         expected = np.sum(parser.variables["W"][:, 0:100])
         assert np.allclose(result, expected)
+
+
+class TestNewPrimitives:
+    def test_rank_matrix(self):
+        p = MiniAPLParser()
+        p.set_variable('M', np.array([[1.0, 2.0], [3.0, 4.0]]))
+        result = p.evaluate("rank(M)")
+        assert result == 2
+
+    def test_rank_singular(self):
+        p = MiniAPLParser()
+        p.set_variable('M', np.array([[1.0, 2.0], [2.0, 4.0]]))
+        result = p.evaluate("rank(M)")
+        assert result == 1
+
+    def test_sort_default(self):
+        p = MiniAPLParser()
+        p.set_variable('v', np.array([3.0, 1.0, 2.0]))
+        result = p.evaluate("sort(v)")
+        expected = np.array([1.0, 2.0, 3.0])
+        assert np.allclose(result, expected)
+
+    def test_dimension_mismatch_add(self):
+        p = MiniAPLParser()
+        p.set_variables(a=np.ones((3, 4)), b=np.ones((5, 6)))
+        with pytest.raises(ValueError, match="Dimension mismatch"):
+            p.evaluate("a + b")
+
+    def test_dimension_mismatch_mul(self):
+        p = MiniAPLParser()
+        p.set_variables(a=np.ones((10,)), b=np.ones((20, 30)))
+        with pytest.raises(ValueError, match="Dimension mismatch"):
+            p.evaluate("a x b")
+
+
+class TestNewPrimitives:
+    def test_rank_matrix(self):
+        p = MiniAPLParser()
+        p.set_variable('M', np.array([[1.0, 2.0], [3.0, 4.0]]))
+        result = p.evaluate("rank(M)")
+        assert result == 2
+
+    def test_rank_singular(self):
+        p = MiniAPLParser()
+        p.set_variable('M', np.array([[1.0, 2.0], [2.0, 4.0]]))
+        result = p.evaluate("rank(M)")
+        assert result == 1
+
+    def test_sort_default(self):
+        p = MiniAPLParser()
+        p.set_variable('v', np.array([3.0, 1.0, 2.0]))
+        result = p.evaluate("sort(v)")
+        expected = np.array([1.0, 2.0, 3.0])
+        assert np.allclose(result, expected)
+
+    def test_dimension_mismatch_add(self):
+        p = MiniAPLParser()
+        p.set_variables(a=np.ones((3, 4)), b=np.ones((5, 6)))
+        with pytest.raises(ValueError, match="Dimension mismatch"):
+            p.evaluate("a + b")
+
+    def test_dimension_mismatch_mul(self):
+        p = MiniAPLParser()
+        p.set_variables(a=np.ones((10,)), b=np.ones((20, 30)))
+        with pytest.raises(ValueError, match="Dimension mismatch"):
+            p.evaluate("a x b")
