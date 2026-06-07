@@ -66,6 +66,29 @@ class MiniAPLParser:
         """Compile and execute immediately."""
         return self.compile(code)()
     
+    def to_pytorch(self, code: str) -> str:
+        """Export APL expression to PyTorch code.
+        
+        Example:
+            >>> parser.to_pytorch("|W| x mean(|act|)")
+            'torch.abs(W) * torch.mean(torch.abs(act))'
+        """
+        from apl_pruning.exporter import to_pytorch
+        ast = self.parse(code)
+        return to_pytorch(ast)
+    
+    def to_pytorch_function(self, code: str, func_name: str = None) -> str:
+        """Export APL code as a complete PyTorch function.
+        
+        Example:
+            >>> print(parser.to_pytorch_function("|W| x mean(|act|)", "wanda"))
+            import torch
+            def wanda(W, act):
+                return torch.abs(W) * torch.mean(torch.abs(act))
+        """
+        from apl_pruning.exporter import to_pytorch_function
+        return to_pytorch_function(code, func_name)
+    
     def __call__(self, code: str):
         return self.evaluate(code)
     
