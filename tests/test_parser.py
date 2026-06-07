@@ -5,11 +5,6 @@ import pytest
 from apl_pruning import MiniAPLParser
 
 
-def _softmax(x, axis=-1):
-    e_x = np.exp(x - np.max(x, axis=axis, keepdims=True))
-    return e_x / np.sum(e_x, axis=axis, keepdims=True)
-
-
 @pytest.fixture
 def parser():
     p = MiniAPLParser()
@@ -23,9 +18,7 @@ def parser():
 
 def test_wanda(parser):
     result = parser.evaluate("|W| x mean(|act|)")
-    expected = np.abs(parser.variables["W"]) * np.mean(
-        np.abs(parser.variables["act"])
-    )
+    expected = np.abs(parser.variables["W"]) * np.mean(np.abs(parser.variables["act"]))
     assert np.allclose(result, expected)
 
 
@@ -120,7 +113,9 @@ def test_std(parser):
 
 def test_softmax(parser):
     result = parser.evaluate("softmax(W)")
-    expected = _softmax(parser.variables["W"], axis=-1)
+    W = parser.variables["W"]
+    e = np.exp(W - np.max(W, axis=-1, keepdims=True))
+    expected = e / np.sum(e, axis=-1, keepdims=True)
     assert np.allclose(result, expected)
 
 
@@ -132,9 +127,7 @@ def test_threshold(parser):
 
 def test_wanda_per_neuron(parser):
     result = parser.evaluate("|W| x mean(|act|)")
-    expected = np.abs(parser.variables["W"]) * np.mean(
-        np.abs(parser.variables["act"])
-    )
+    expected = np.abs(parser.variables["W"]) * np.mean(np.abs(parser.variables["act"]))
     assert np.allclose(result, expected)
 
 
@@ -143,12 +136,14 @@ def test_variable_not_found(parser):
         parser.evaluate("mean(Z)")
 
 
-# New edge case tests
 def test_broadcasting_multiply(parser):
     vec = np.array([2.0, 3.0])
     mat = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
     parser.set_variables(vec=vec, mat=mat)
     result = parser.evaluate("vec x mat")
+    expected = vec.reshape(-1, 1) * mat
+    assert result.shape == (2, 3)
+    assert np.allclose(result, expected)
 
 
 def test_nested_abs(parser):
@@ -158,8 +153,8 @@ def test_nested_abs(parser):
 
 
 def test_chain_operations(parser):
-    result = parser.evaluate("sum(|W|) / (max(|W|) + 0.001)")
     W = parser.variables["W"]
+    result = parser.evaluate("sum(|W|) / (max(|W|) + 0.001)")
     expected = np.sum(np.abs(W)) / (np.max(np.abs(W)) + 0.001)
     assert np.allclose(result, expected)
 
@@ -180,5 +175,7 @@ def test_single_element(parser):
 
 def test_softmax_axis_param(parser):
     result = parser.evaluate("softmax(W, dim=0)")
-    expected = _softmax(parser.variables["W"], axis=0)
+    W = parser.variables["W"]
+    e = np.exp(W - np.max(W, axis=0, keepdims=True))
+    expected = e / np.sum(e, axis=0, keepdims=True)
     assert np.allclose(result, expected)

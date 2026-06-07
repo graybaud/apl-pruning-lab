@@ -8,20 +8,11 @@ from apl_pruning import MiniAPLParser
 @pytest.fixture
 def parser():
     p = MiniAPLParser()
+    rng = np.random.RandomState(42)
     p.set_variables(
-        W=np.random.randn(768, 3072).astype(np.float32),
-        act=np.random.randn(128, 768).astype(np.float32),
-        grad=np.random.randn(768, 3072).astype(np.float32),
-    )
-    return p
-
-
-@pytest.fixture
-def small_parser():
-    p = MiniAPLParser()
-    p.set_variables(
-        W=np.array([[1.0, -2.0, 3.0], [-0.5, 4.0, -1.0]]),
-        act=np.array([[0.5, 0.3, 0.8], [0.1, 0.9, 0.2]]),
+        W=rng.randn(768, 3072).astype(np.float32),
+        act=rng.randn(128, 768).astype(np.float32),
+        grad=rng.randn(768, 3072).astype(np.float32),
     )
     return p
 
@@ -94,7 +85,7 @@ class TestBroadcasting:
         mat = np.ones((2, 5))
         parser.set_variables(s=s, mat=mat)
         result = parser.evaluate("s + mat")
-        assert result.shape == (2, 5)
+        assert np.allclose(result, np.ones((2, 5)) + 3.0)
 
     def test_mean_along_axis_times_matrix(self, parser):
         result = parser.evaluate("|W| x mean(|W|, dim=-1)")
@@ -274,14 +265,14 @@ class TestRegression:
         assert np.allclose(result, expected)
 
     def test_chained_operations_regression(self, parser):
-        result = parser.evaluate("sum(|W|) / (max(|W|) + 1.0)")
         W = parser.variables["W"]
+        result = parser.evaluate("sum(|W|) / (max(|W|) + 1.0)")
         expected = np.sum(np.abs(W)) / (np.max(np.abs(W)) + 1.0)
         assert np.allclose(result, expected)
 
     def test_nested_abs_regression(self, parser):
-        result = parser.evaluate("| (|W| - 0.5) |")
         W = parser.variables["W"]
+        result = parser.evaluate("| (|W| - 0.5) |")
         expected = np.abs(np.abs(W) - 0.5)
         assert np.allclose(result, expected)
 
@@ -298,7 +289,7 @@ class TestFuzzing:
             result = parser.evaluate(code)
             W_abs = np.abs(parser.variables["W"])
             expected = np_funcs[f](W_abs)
-            assert np.allclose(result, expected), f"Mismatch for {f}"
+            assert np.allclose(result, expected, rtol=1e-5), f"Mismatch for {f}"
 
     def test_random_binary_operations(self, parser):
         ops = {'+': np.add, '-': np.subtract, 'x': np.multiply, '^': np.power}
@@ -308,47 +299,51 @@ class TestFuzzing:
             code = f"|W| {op} |grad|"
             result = parser.evaluate(code)
             expected = np_op(np.abs(W), np.abs(grad))
-            assert np.allclose(result, expected), f"Mismatch for {op}"
+            assert np.allclose(result, expected, rtol=1e-5), f"Mismatch for {op}"
 
     def test_safe_division(self, parser):
         W = parser.variables["W"]
         grad = parser.variables["grad"]
         result = parser.evaluate("|W| / (|grad| + 1.0)")
         expected = np.abs(W) / (np.abs(grad) + 1.0)
-        assert np.allclose(result, expected)
+        assert np.allclose(result, expected, rtol=1e-5)
 
     def test_random_complex_expressions(self, parser):
+        W = parser.variables["W"]
         test_cases = [
-            ("max(|W|) - min(|W|)", lambda W: np.max(np.abs(W)) - np.min(np.abs(W))),
-            ("sum(|W|) / (mean(|W|) + 1.0)", lambda W: np.sum(np.abs(W)) / (np.mean(np.abs(W)) + 1.0)),
+            ("max(|W|) - min(|W|)",
+             lambda w: np.max(np.abs(w)) - np.min(np.abs(w))),
+            ("sum(|W|) / (mean(|W|) + 1.0)",
+             lambda w: np.sum(np.abs(w)) / (np.mean(np.abs(w)) + 1.0)),
             ("norm(W, dim=-1) / (std(W, dim=-1) + 1.0)",
-             lambda W: np.linalg.norm(W, axis=-1) / (np.std(W, axis=-1) + 1.0)),
+             lambda w: np.linalg.norm(w, axis=-1) / (np.std(w, axis=-1) + 1.0)),
         ]
         for code, expected_fn in test_cases:
             result = parser.evaluate(code)
-            expected = expected_fn(parser.variables["W"])
-            assert np.allclose(result, expected), f"Mismatch for: {code}"
+            expected = expected_fn(W)
+            assert np.allclose(result, expected, rtol=1e-5), f"Mismatch for: {code}"
 
     def test_expression_with_all_primitives(self, parser):
-        code = """
+        W = parser.variables["W"]
+        grad = parser.variables["grad"]
+        act = parser.variables["act"]
+        
+        result = parser.evaluate("""
             a <- mean(|W|)
             b <- std(W)
             c <- max(|grad|)
             d <- norm(W, dim=-1)
             e <- sum(|act|)
             (a x c + b) / (mean(d) + e + 1.0)
-        """
-        result = parser.evaluate(code)
-        W = parser.variables["W"]
-        grad = parser.variables["grad"]
-        act = parser.variables["act"]
+        """)
+        
         a = np.mean(np.abs(W))
         b = np.std(W)
         c = np.max(np.abs(grad))
         d = np.linalg.norm(W, axis=-1)
         e = np.sum(np.abs(act))
         expected = (a * c + b) / (np.mean(d) + e + 1.0)
-        assert np.allclose(result, expected)
+        assert np.allclose(result, expected, rtol=1e-5)
 
     def test_indexing_then_operation(self, parser):
         result = parser.evaluate("mean(|W[0]|)")
