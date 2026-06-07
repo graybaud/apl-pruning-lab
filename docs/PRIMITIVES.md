@@ -21,7 +21,11 @@ Give this to your LLM. It will write pruning formulas.
 | log(X) | np.log(X) | Natural log |
 | exp(X) | np.exp(X) | Exponential |
 | softmax(X) | softmax(X) | Softmax along last axis |
-| threshold(X, t) | (X > t).astype(float) | Binary mask |
+| softmax(X, dim=0) | softmax(X, axis=0) | Softmax along first axis |
+| threshold(X, t) | (X > t).float() | Binary mask |
+| topk(X, k) | topk(X.flatten(), k).values | Top-k values |
+| rank(X) | matrix_rank(X) | Matrix rank |
+| sort(X) | np.sort(X) | Sort elements |
 
 ## Binary Operators
 
@@ -46,8 +50,37 @@ Give this to your LLM. It will write pruning formulas.
 | W[i] | W[i] | Row i |
 | W[:, j] | W[:, j] | Column j |
 | W[i, j] | W[i, j] | Element (i,j) |
+| W[0:512] | W[0:512] | Slice rows |
+
+## PyTorch Export
+
+Any formula can be exported to PyTorch:
+
+
+from apl_pruning import to_pytorch, to_pytorch_function
+
+# Single expression
+print(to_pytorch("|W| x mean(|act|)"))
+# -> (torch.abs(W) * torch.mean(torch.abs(act)))
+
+# Complete function
+print(to_pytorch_function("|W| x mean(|act|)", "wanda"))
+# -> import torch
+#    def wanda(W, act):
+#        return torch.abs(W) * torch.mean(torch.abs(act))
+
+
+## Error Messages
+
+- `Variable 'X' not defined. Available: [...]`
+- `Cannot compute mean of empty tensor`
+- `Division by near-zero. min(|denominator|) = ...`
+- `Cannot compute sqrt of negative values. Use |X| first.`
+- `Cannot compute log of non-positive values. Use |X| or X + epsilon.`
+- `Dimension mismatch: (a,b) + (c,d) cannot be broadcast.`
 
 ## Example Formulas
+
 
 // Wanda
 |W| x mean(|act|)
@@ -86,19 +119,9 @@ softmax(|W|)
 // Threshold mask
 threshold(|W|, 0.5)
 
-## Additional Primitives (v0.2.1)
+// Top-10 weights
+topk(|W|, 10)
 
-| APL | Python/NumPy | Description |
-|-----|-------------|-------------|
-| rank(X) | np.linalg.matrix_rank(X) | Matrix rank |
-| sort(X) | np.sort(X) | Sort elements |
+// Matrix rank
+rank(W)
 
-## Error Messages
-
-The parser provides clear error messages:
-- `Variable 'X' not defined. Available: [...]`
-- `Cannot compute mean of empty tensor`
-- `Division by near-zero. min(|denominator|) = ...`
-- `Cannot compute sqrt of negative values. Use |X| first.`
-- `Cannot compute log of non-positive values. Use |X| or X + epsilon.`
-- `Dimension mismatch: (a,b) + (c,d) cannot be broadcast.`
