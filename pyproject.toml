@@ -5,18 +5,16 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "apl-pruning"
 version = "0.5.0"
-description = "Mini APL DSL for mathematical formulas — scoring, pruning, tensor expressions"
+description = "Mini APL DSL for mathematical formulas"
 requires-python = ">=3.10"
-dependencies = [
-    "numpy>=1.24",
-]
+dependencies = ["numpy>=1.24"]
 
 [project.optional-dependencies]
-dev = [
-    "pytest>=7.4",
-    "pytest-cov>=4.1",
-    "taskipy>=1.12",
-]
+dev = ["pytest>=7.4", "pytest-cov>=4.1", "taskipy>=1.12"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["domain*", "infrastructure*", "apl_pruning*"]
 
 [tool.taskipy.tasks]
 clean = "find . -type d -name '__pycache__' -exec rm -rf {} + 2>/dev/null; find . -type f -name '*.pyc' -delete; find . -type d -name '.pytest_cache' -exec rm -rf {} +; find . -type d -name 'htmlcov' -exec rm -rf {} +; echo Done"
