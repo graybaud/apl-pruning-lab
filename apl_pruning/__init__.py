@@ -1,9 +1,13 @@
-"""APL Pruning Lab — Mini APL DSL for mathematical formulas.
+"""
+APL Pruning Lab — Application Layer
+
+This package orchestrates the domain (pure language) and infrastructure
+(PyTorch export) to provide a complete pruning formula evaluation pipeline.
 
 Architecture:
     domain/          — Pure language (tokenizer, grammar, evaluator, formulas)
-    infrastructure/  — Export adapters (PyTorch, future: JAX, TensorFlow)
-    apl_pruning/     — Application (parser, layer scorer)
+    infrastructure/  — Export adapters (PyTorch, future: JAX)
+    apl_pruning/     — Application (parser, layer scorer)  <-- YOU ARE HERE
     orchestration/   — Entry points (examples, CLI)
 """
 
