@@ -40,7 +40,7 @@ def to_pytorch(ast_or_code, variables=None):
         str: PyTorch code string.
     
     Example:
-        >>> from apl_pruning import MiniAPLParser
+        >>> from apl_pruning.parser import MiniAPLParser
         >>> p = MiniAPLParser()
         >>> ast = p.parse("|W| x mean(|act|)")
         >>> print(to_pytorch(ast))
@@ -184,7 +184,7 @@ def to_pytorch_function(code, func_name=None, variables=None):
         def wanda(W, act):
             return torch.abs(W) * torch.mean(torch.abs(act))
     """
-    from apl_pruning import MiniAPLParser
+    from apl_pruning.parser import MiniAPLParser
     
     p = MiniAPLParser()
     ast = p.parse(code)

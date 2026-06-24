@@ -13,7 +13,7 @@ Usage:
     formula = METHODS["wanda"]["formula"]
 """
 
-from apl_pruning import MiniAPLParser
+# MiniAPLParser imported lazily
 
 # ======================================================================
 # Method Registry
@@ -355,10 +355,10 @@ def score_layer(method: str, **variables):
     Example:
         scores = score_layer("wanda", W=weights, act=activations)
     """
+    from apl_pruning.parser import MiniAPLParser
     if method not in METHODS:
         available = list(METHODS.keys())
         raise ValueError(f"Unknown method '{method}'. Available: {available}")
-    
     formula = METHODS[method]["formula"]
     parser = MiniAPLParser()
     parser.set_variables(**variables)
@@ -374,7 +374,7 @@ def get_formula(method: str) -> str:
 
 def get_pytorch(method: str) -> str:
     """Get PyTorch code for a method."""
-    from apl_pruning.exporter import to_pytorch
+    from infrastructure.exporter import to_pytorch
     formula = get_formula(method)
     return to_pytorch(formula)
 
@@ -397,6 +397,7 @@ def compare_methods(methods, **variables):
     Returns:
         dict: {method_name: score_array}
     """
+    from apl_pruning.parser import MiniAPLParser
     results = {}
     parser = MiniAPLParser()
     for method in methods:

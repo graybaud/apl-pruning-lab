@@ -1,7 +1,7 @@
 """Evaluates an AST into numpy arrays."""
 
 import numpy as np
-from apl_pruning.utils import (
+from domain.utils import (
     softmax, broadcast_add, broadcast_sub, broadcast_mul, broadcast_div,
     safe_mean, safe_var, safe_std, safe_sum, safe_norm, safe_rank, safe_sort
 )

@@ -2,7 +2,7 @@
 
 import numpy as np
 import pytest
-from apl_pruning.scorers import (
+from domain.scorers import (
     METHODS, score_layer, get_formula, get_pytorch, list_methods, compare_methods
 )
 

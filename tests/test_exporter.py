@@ -3,7 +3,7 @@
 import pytest
 import numpy as np
 from apl_pruning import MiniAPLParser
-from apl_pruning.exporter import to_pytorch, to_pytorch_function
+from infrastructure.exporter import to_pytorch, to_pytorch_function
 
 
 @pytest.fixture
