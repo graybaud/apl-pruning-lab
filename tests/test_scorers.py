@@ -115,3 +115,54 @@ def test_threshold_method(data):
     result = score_layer("threshold", W=data["W"])
     expected = (np.abs(data["W"]) > 0.5).astype(np.float32)
     assert np.allclose(result, expected)
+
+
+# ======================================================================
+# New methods added for CastNet exploration
+# ======================================================================
+
+class TestQ30:
+    def test_weighted(self):
+        W = np.random.randn(5, 10)
+        s = score_layer("q30_weighted", W=W)
+        assert s.shape == (5,)
+
+    def test_count(self):
+        W = np.random.randn(5, 10)
+        s = score_layer("q30_count", W=W)
+        # count(threshold(|W|, 0.1)) returns scalar by default (no dim specified)
+        assert s.ndim == 0  # scalar
+
+
+class TestWandaGradientDistortion:
+    def test_wanda_x_distortion(self):
+        W = np.random.randn(5, 10)
+        act = np.random.randn(50, 10)
+        dist = np.random.rand(5)
+        s = score_layer("wanda_x_distortion", W=W, act=act, distortion=dist)
+        assert s.shape == (5, 10)
+
+    def test_gradient_x_distortion(self):
+        W = np.random.randn(5, 10)
+        grad = np.random.randn(5, 10)
+        dist = np.random.rand(5)
+        s = score_layer("gradient_x_distortion", W=W, grad=grad, distortion=dist)
+        assert s.shape == (5, 10)
+
+
+class TestGPSStandalone:
+    def test_direction_standalone(self):
+        W = np.random.randn(5, 10)
+        s = score_layer("direction_standalone", W=W)
+        assert s.shape == (5,)
+
+    def test_selectivity_standalone(self):
+        act = np.random.randn(50, 10)
+        s = score_layer("selectivity_standalone", act=act)
+        assert s.ndim <= 1
+
+    def test_distortion_standalone(self):
+        dist = np.random.rand(5)
+        s = score_layer("distortion_standalone", distortion=dist)
+        assert s.shape == (5,)
+

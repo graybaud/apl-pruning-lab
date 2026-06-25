@@ -15,6 +15,7 @@ _UNARY_MAP = {
     'sqrt': 'torch.sqrt',
     'log': 'torch.log',
     'exp': 'torch.exp',
+    'count': 'count',
     'softmax': 'torch.nn.functional.softmax',
     'rank': 'torch.linalg.matrix_rank',
     'sort': 'torch.sort',

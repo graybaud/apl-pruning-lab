@@ -572,3 +572,64 @@ METHODS.update({
         "variables": ["W", "act"],
     },
 })
+
+
+# ======================================================================
+# Q30 -- Hub scoring (weighted in-degree)
+# ======================================================================
+
+METHODS.update({
+    "q30_weighted": {
+        "formula": "sum(|W|, dim=-1)",
+        "needs_grad": False,
+        "description": "Q30 weighted: sum of absolute weights per neuron (hub score)",
+        "variables": ["W"],
+    },
+    "q30_count": {
+        "formula": "count(threshold(|W|, 0.1))",
+        "needs_grad": False,
+        "description": "Q30 count: number of connections above threshold",
+        "variables": ["W"],
+    },
+
+    # ======================================================================
+    # Wanda x Distortion / Gradient x Distortion
+    # ======================================================================
+
+    "wanda_x_distortion": {
+        "formula": "|W| x mean(|act|) x distortion",
+        "needs_grad": False,
+        "description": "Wanda filtered by geometric distortion",
+        "variables": ["W", "act", "distortion"],
+    },
+    "gradient_x_distortion": {
+        "formula": "|W| x |grad| x distortion",
+        "needs_grad": True,
+        "description": "Gradient filtered by geometric distortion",
+        "variables": ["W", "grad", "distortion"],
+    },
+
+    # ======================================================================
+    # GPS components standalone
+    # ======================================================================
+
+    "direction_standalone": {
+        "formula": "max(|W|, dim=-1) / mean(|W|, dim=-1)",
+        "needs_grad": False,
+        "description": "Direction only (GPS component 1)",
+        "variables": ["W"],
+    },
+    "selectivity_standalone": {
+        "formula": "var(act) / mean(act)",
+        "needs_grad": False,
+        "description": "Selectivity only (GPS component 2)",
+        "variables": ["act"],
+    },
+    "distortion_standalone": {
+        "formula": "distortion",
+        "needs_grad": False,
+        "description": "Distortion only (GPS component 3) -- must be precomputed",
+        "variables": ["distortion"],
+    },
+})
+

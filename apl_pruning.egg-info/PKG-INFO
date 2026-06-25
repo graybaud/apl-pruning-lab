@@ -1,10 +1,12 @@
 Metadata-Version: 2.4
 Name: apl-pruning
-Version: 0.2.0
-Summary: Minimal APL-like DSL for describing LLM pruning methods. Compiles to numpy.
+Version: 0.5.0
+Summary: Mini APL DSL for mathematical formulas
 Requires-Python: >=3.10
 License-File: LICENSE
 Requires-Dist: numpy>=1.24
 Provides-Extra: dev
-Requires-Dist: pytest; extra == "dev"
+Requires-Dist: pytest>=7.4; extra == "dev"
+Requires-Dist: pytest-cov>=4.1; extra == "dev"
+Requires-Dist: taskipy>=1.12; extra == "dev"
 Dynamic: license-file

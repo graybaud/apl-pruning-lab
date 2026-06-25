@@ -130,6 +130,11 @@ def _eval_function(ast, variables):
     arg = eval_ast(ast[2], variables)
     axis = _normalize_axis(ast[3])
     
+    # Extraire les kwargs si presents (ast[4])
+    kwargs = {}
+    if len(ast) > 4 and ast[4] is not None:
+        kwargs = ast[4]
+    
     if func_name == 'mean':
         return safe_mean(arg, axis=axis) if axis is not None else safe_mean(arg)
     if func_name == 'var':
@@ -165,6 +170,13 @@ def _eval_function(ast, variables):
     
     if func_name == 'exp':
         return np.exp(arg)
+    if func_name == 'count':
+        return np.sum(arg > 0.0, axis=axis)
+    if func_name == 'count':
+        threshold = 0.0
+        if args and len(args) > 1:
+            threshold = float(args[1])
+        return np.sum(arg > threshold, axis=axis)
     if func_name == 'softmax':
         return softmax(arg, axis=axis if axis is not None else -1)
     if func_name == 'abs':
